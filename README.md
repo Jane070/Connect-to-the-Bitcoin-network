@@ -41,8 +41,11 @@ To build and run this application, you will need:
 The codebase is organized into the following modules:
 
 'main.py': Main entry point of the application.
+
 'node_communication.py': Handles all communication with the Bitcoin node (connecting, sending, and receiving messages).
+
 'parsing.py': Contains all parsing-related functions.
+
 'utils.py': Contains utility functions for creating version payloads, parsing messages, and verifying block hashes.
 
 ## Output Example
