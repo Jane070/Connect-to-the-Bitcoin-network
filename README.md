@@ -20,7 +20,8 @@ To build and run this application, you will need:
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/Jane070/bitcoin-node-connector.git
+   git clone https://github.com/Jane070/Connect-to-the-Bitcoin-network.git
+
 
 
 ## Usage
