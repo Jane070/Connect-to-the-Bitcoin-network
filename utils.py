@@ -8,11 +8,14 @@ MAGIC_NUMBER = 0xD9B4BEF9
 
 
 def create_version_payload():
+    # Constructing a version payload for initiating communication with a Bitcoin node
     version = struct.pack('<I', 70015)  # Protocol version
     services = struct.pack('<Q', 1)  # Node services
     timestamp = struct.pack('<q', int(time.time()))
+    # Receiver address (localhost for demonstration purposes)
     addr_recv = struct.pack('<Q', 1) + b'\x00' * 10 + b'\xff\xff' + socket.inet_aton("127.0.0.1") + struct.pack('>H',
-                                                                                                                8333)
+                                                                                                        8333)
+    # Sender address (localhost for demonstration purposes)
     addr_from = struct.pack('<Q', 1) + b'\x00' * 10 + b'\xff\xff' + socket.inet_aton("127.0.0.1") + struct.pack('>H',
                                                                                                                 8333)
     nonce = struct.pack('<Q', 0)  # Random nonce
@@ -23,6 +26,7 @@ def create_version_payload():
 
 
 def parse_message(data):
+    # Parse the received message from the Bitcoin node
     magic = struct.unpack('<L', data[:4])[0]
     command = data[4:16].strip(b'\x00').decode()
     length = struct.unpack('<L', data[16:20])[0]
@@ -32,6 +36,7 @@ def parse_message(data):
 
 
 def decode_varint(data):
+    # Decode a variable integer from the given byte stream
     n = data[0]
     if n < 0xfd:
         return n, data[1:]
@@ -43,50 +48,25 @@ def decode_varint(data):
         return struct.unpack('<Q', data[1:9])[0], data[9:]
 
 
-def parse_block(payload):
-    block_header = payload[:80]
-    version = struct.unpack('<I', block_header[:4])[0]
-    prev_block = block_header[4:36].hex()
-    merkle_root = block_header[36:68].hex()
-    timestamp = struct.unpack('<I', block_header[68:72])[0]
-    bits = struct.unpack('<I', block_header[72:76])[0]
-    nonce = struct.unpack('<I', block_header[76:80])[0]
-    human_readable_time = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+# Function to send a message to the Bitcoin node
+def send_message(sock, command, payload):
+    magic = struct.pack('<L', 0xD9B4BEF9) # Magic value for Bitcoin network
+    command = command.ljust(12, '\x00').encode('utf-8') # Command string padded to 12 bytes
+    length = struct.pack('<I', len(payload)) # Length of payload
+    checksum = hashlib.sha256(hashlib.sha256(payload).digest()).digest()[:4] # Checksum of payload
+    message = magic + command + length + checksum + payload # Constructing the message
+    print(f"Sending message: {message.hex()}")
+    sock.sendall(message)
+    print(f"Sent {command.strip().decode()} message")
 
-    transaction_count, tx_data = decode_varint(payload[80:])
-    transactions = []
-
-    offset = 80 + len(tx_data)
-    for _ in range(transaction_count):
-        tx_length, tx_data = decode_varint(payload[offset:])
-        transactions.append(payload[offset:offset + tx_length].hex())
-        offset += tx_length
-
-    return {
-        'version': version,
-        'prev_block': prev_block,
-        'merkle_root': merkle_root,
-        'timestamp': human_readable_time,
-        'bits': bits,
-        'nonce': nonce,
-        'transactions': transactions
-    }
-
-
-def verify_block_hash(block_header, expected_hash):
-    actual_hash = hashlib.sha256(hashlib.sha256(block_header).digest()).digest()[::-1]
-    return actual_hash.hex() == expected_hash
+# Function to send a pong message in response to a ping message from the node
+def send_pong(sock, nonce):
+    print("Sending pong message...")
+    send_message(sock, 'pong', nonce)
+    print("Sent pong message in response to ping")
 
 def format_timestamp(timestamp):
+    # Format a UNIX timestamp into a human-readable format
     return datetime.utcfromtimestamp(timestamp).strftime('%dst %B %Y at %H:%M')
 
-def display_block_details(block):
-    formatted_time = format_timestamp(block['timestamp'])
-    print(f"Block added on: {formatted_time}")
-    print("Transactions in the block:")
-    for tx in block['transactions']:
-        print(f"  Transaction ID: {tx['tx_id']} - Value: {tx['value']} BTC")
-    print(f"Nonce: {block['nonce']}")
-    print(f"Difficulty: {block['difficulty']}")
-    calculated_hash = verify_block_hash(block)
-    print(f"Block Hash: {block['hash']} (Verified: {calculated_hash == block['hash']})")
+
