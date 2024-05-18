@@ -76,3 +76,17 @@ def parse_block(payload):
 def verify_block_hash(block_header, expected_hash):
     actual_hash = hashlib.sha256(hashlib.sha256(block_header).digest()).digest()[::-1]
     return actual_hash.hex() == expected_hash
+
+def format_timestamp(timestamp):
+    return datetime.utcfromtimestamp(timestamp).strftime('%dst %B %Y at %H:%M')
+
+def display_block_details(block):
+    formatted_time = format_timestamp(block['timestamp'])
+    print(f"Block added on: {formatted_time}")
+    print("Transactions in the block:")
+    for tx in block['transactions']:
+        print(f"  Transaction ID: {tx['tx_id']} - Value: {tx['value']} BTC")
+    print(f"Nonce: {block['nonce']}")
+    print(f"Difficulty: {block['difficulty']}")
+    calculated_hash = verify_block_hash(block)
+    print(f"Block Hash: {block['hash']} (Verified: {calculated_hash == block['hash']})")
