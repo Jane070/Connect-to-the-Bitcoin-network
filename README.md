@@ -6,7 +6,7 @@ Bitcoin Node Connector is a Python application that facilitates communication wi
 
 ## Repository
 
-The source code for this project is hosted on [GitHub](https://github.com/your-username/bitcoin-node-connector).
+The source code for this project is hosted on [GitHub](https://github.com/Jane070/Connect-to-the-Bitcoin-network.git).
 
 ## Dependencies
 
